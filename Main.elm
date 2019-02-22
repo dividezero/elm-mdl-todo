@@ -157,15 +157,7 @@ type alias Mdl =
 
 view : Model -> Html Msg
 view model =
-    Layout.render Mdl
-        model.mdl
-        [ Layout.fixedHeader
-        ]
-        { header = [ h3 [ style [ ( "padding", "2rem" ) ] ] [ text "Counter" ] ]
-        , drawer = []
-        , tabs = ( [], [] )
-        , main = [ viewBody model ]
-        }
+    viewBody model
         |> Material.Scheme.top
 
 
@@ -188,7 +180,7 @@ viewBody model = div [ style [ ( "display", "flex" ), ("justify-content", "cente
                         , Options.onInput (OnEditField)
                         , Options.on "keydown" (JD.andThen isEnter keyCode)] []
                     ]
-                , Lists.ul []
+                , Lists.ul [ css "width" "100%" ]
                    <| List.map viewKeyedEntry (model.entries)
                 ]
           ]
@@ -199,8 +191,10 @@ viewKeyedEntry todo =
     ( lazy viewEntry todo )
 
 viewEntry : Entry -> Html Msg
-viewEntry entry = div [] [ Lists.li [Options.onClick (ToggleDone entry.id (not entry.completed))] [ Lists.content []
-    [ p [ style [ (getListStyle entry.completed) ] ] [ text entry.description ]] ] ]
+viewEntry entry = div [] [ Lists.li [Options.onClick (ToggleDone entry.id (not entry.completed))]
+    [ Lists.content []
+        [ p [ style [ (getListStyle entry.completed) ] ] [ text entry.description ]]
+    ] ]
 
 getListStyle : Bool -> ( String, String )
 getListStyle isComplete =
