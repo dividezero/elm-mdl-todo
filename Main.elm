@@ -14,8 +14,9 @@ import Html.Attributes exposing (href, class, style)
 import Json.Decode as JD
 import Material
 import Material.Scheme
-import Material.Layout as Layout
+import Material.Icon as Icon
 import Material.Card as Card
+import Material.Button as Button
 import Material.Elevation as Elevation
 import Material.List as Lists
 import Material.Textfield as Textfield
@@ -49,10 +50,7 @@ model =
     , raiseCard = 0
     , uid = 4
     , field = ""
-    , entries = [ { description = "lolol", completed = False, editing = False, id = 1}
-        , { description = "lolol", completed = False, editing = False, id = 2}
-        , { description = "lolol", completed = False, editing = False, id = 3}
-        ]
+    , entries = [ { description = "Add TODOs in list", completed = False, editing = False, id = 1} ]
     , mdl =
         Material.model
         -- Boilerplate: Always use this initial Mdl model store.
@@ -70,6 +68,7 @@ type Msg
     | OnEditField String
     | AddTodo String
     | ToggleDone Int Bool
+    | Delete Int
     | Mdl (Material.Msg Msg)
 
 
@@ -129,6 +128,10 @@ update msg model =
             , Cmd.none
             )
 
+        Delete id ->
+            ( { model | entries = List.filter (\t -> t.id /= id) model.entries }
+            , Cmd.none
+            )
         -- Boilerplate: Mdl action handler.
         Mdl msg_ ->
             Material.update Mdl msg_ model
@@ -163,7 +166,7 @@ view model =
 
 -- This used to be the `view`
 viewBody : Model -> Html Msg
-viewBody model = div [ style [ ( "display", "flex" ), ("justify-content", "center" ), ("padding", "32px") ]  ]
+viewBody model = div [ style [ ( "display", "flex" ), ("justify-content", "center" ), ("align-items", "end"), ("padding", "32px"), ("background", "linear-gradient(-45deg, #36d1dc 20%, #5b86e5 90%)") , ("height", "100vh") ]  ]
     [ Card.view
           [  css "width" "500px"
           -- Elevation
@@ -172,10 +175,12 @@ viewBody model = div [ style [ ( "display", "flex" ), ("justify-content", "cente
           , Options.onMouseEnter (Raise 1)
           , Options.onMouseLeave (Raise -1)
           ]
-          [ Card.title []
-                [ Card.head [ ]
+          [ Card.title [ css "width" "100%" ]
+                [ div [] [h3 [ ] [ text "My ToDo List" ]]
+                , Card.head [ css "width" "100%" ]
                     [ Textfield.render Mdl [1] model.mdl
-                        [ Textfield.label "What do you need to do?"
+                        [ css "width" "100%"
+                        , Textfield.label "What do you need to do?"
                         , Textfield.value model.field
                         , Options.onInput (OnEditField)
                         , Options.on "keydown" (JD.andThen isEnter keyCode)] []
@@ -191,10 +196,19 @@ viewKeyedEntry todo =
     ( lazy viewEntry todo )
 
 viewEntry : Entry -> Html Msg
-viewEntry entry = div [] [ Lists.li [Options.onClick (ToggleDone entry.id (not entry.completed))]
-    [ Lists.content []
-        [ p [ style [ (getListStyle entry.completed) ] ] [ text entry.description ]]
-    ] ]
+viewEntry entry = let
+                    star model k =
+                        Button.render Mdl [k] model.mdl
+                            [ Button.icon
+                            , Options.onClick (Delete k)
+                            ]
+                            [ Icon.i "close" ]
+                in
+                    div [] [ Lists.li [Options.onClick (ToggleDone entry.id (not entry.completed))]
+                        [ Lists.content [ css "display" "flex", css "justify-content" "space-between" ]
+                            [ p [ style [ (getListStyle entry.completed) ] ] [ text entry.description ]
+                            , star model entry.id]
+                        ] ]
 
 getListStyle : Bool -> ( String, String )
 getListStyle isComplete =
